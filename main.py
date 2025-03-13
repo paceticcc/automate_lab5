@@ -1,16 +1,12 @@
-import re
-from collections import defaultdict
 import csv
 import sys
 
 def export_moore_automaton_to_csv(moore_automaton, filename, start_state):
-    # Получаем все уникальные inputSym
     all_input_symbols = set()
 
     for key in moore_automaton:
         state = moore_automaton[key]
         for transition in state['transitions']:
-            #if transition['nextPos']:  # используемые символы ввода
             all_input_symbols.add(transition['inputSym'])
 
     all_input_symbols = sorted(all_input_symbols)
@@ -19,19 +15,15 @@ def export_moore_automaton_to_csv(moore_automaton, filename, start_state):
     with open(filename, mode='w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file, delimiter=';')
 
-        # Первая строка: выходные значения
         output_row = [''] + [moore_automaton[key]['output'] for key in state_keys]
         writer.writerow(output_row)
 
-        # Вторая строка: имена состояний
         headers = [''] + state_keys
         writer.writerow(headers)
 
-        # Остальные строки: переходы для каждого символа ввода
         for symbol in all_input_symbols:
             row = [symbol]
             for key in state_keys:
-                # Ищем переход для данного символа
                 state = moore_automaton[key]
                 next_states = [
                     transition['nextPos']
@@ -40,9 +32,9 @@ def export_moore_automaton_to_csv(moore_automaton, filename, start_state):
                 ]
 
                 if not next_states:
-                    row.append('')  # Пустая ячейка, если нет переходов
+                    row.append('')
                 else:
-                    output_str = ','.join(next_states)  # Все состояния через запятую
+                    output_str = ','.join(next_states)
                     row.append(output_str)
 
             writer.writerow(row)
@@ -52,16 +44,15 @@ def export_moore_automaton_to_csv(moore_automaton, filename, start_state):
 
 def parse_regex(pattern):
     def parse_or(expr):
-        #print(expr)
         parts = []
         current = []
-        depth = 0  # вложенность скобок
+        depth = 0
         for char in expr:
             if char == "(":
                 depth += 1
             elif char == ")":
                 depth -= 1
-            elif char == "|" and depth == 0:  #только на верхнем уровне
+            elif char == "|" and depth == 0:
                 parts.append("".join(current))
                 current = []
                 continue
@@ -79,7 +70,7 @@ def parse_regex(pattern):
             if expr[i] == "(":
                 end = find_closing_parenthesis(expr, i)
                 sub_expr = expr[i + 1:end]
-                if sub_expr == "":  # Если скобки пустые, добавить `e`
+                if sub_expr == "":
                     parts.append({"type": "Literal", "value": "ε"})
                 else:
                     parts.append(parse_or(sub_expr))
@@ -94,25 +85,21 @@ def parse_regex(pattern):
                 parts.append({"type": "Literal", "value": expr[i]})
                 i += 1
 
-        # Создание Б-дерева для конкатенации
         if len(parts) == 1:
             return parts[0]
 
-        #  Concat(a, Concat(b, c))
         return build_concat_tree(parts)
 
     def build_concat_tree(parts):
         if len(parts) == 1:
             return parts[0]
 
-        # Рекурсивно строим дерево конкатенации
         left = parts[0]
         right = build_concat_tree(parts[1:])
         return {"type": "Concat", "left": left, "right": right}
 
     def find_closing_parenthesis(expr, start):
         depth = 1
-        #print(expr)
         for i in range(start + 1, len(expr)):
             if expr[i] == "(":
                 depth += 1
@@ -228,8 +215,6 @@ def main():
     output_file = sys.argv[1]
     regex = sys.argv[2]
 
-    #output_file = "1.csv"
-    #regex = "a+b(c|())x"
     parsed_tree = parse_regex(regex)
     print(parsed_tree)
 
