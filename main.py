@@ -197,11 +197,8 @@ def makeResult(nfa):
 
 
 def main():
-    inFile = sys.argv[1]
-    outFile = sys.argv[2]
-
-    with open(inFile, 'r') as f:
-        regex = f.read().strip()
+    outFile = sys.argv[1]
+    regex = sys.argv[2].strip()
 
     nfa = regexToNFA(regex)
     result = makeResult(nfa)
